@@ -1,36 +1,14 @@
-var express = require("express"),
-    app = express(),
-    bodyParser = require("body-parser"),
-    mongoose = require("mongoose");
-
+var express     = require("express"),
+    app         = express(),
+    bodyParser  = require("body-parser"),
+    mongoose    = require("mongoose"),
+    Campground  = require("./models/campground"),
+    seedDB      = require("./seeds");
+    
 mongoose.connect("mongodb://localhost/yelp_camp");
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
-
-//Schema Setup
-var campgroundSchema = new mongoose.Schema({
-    name: String,
-    image: String,
-    description: String
-});
-
-var Campground = mongoose.model("Campground", campgroundSchema);
-
-// Campground.create(
-//     {
-//         name: "Granite Hill",
-//         image: "https://images.unsplash.com/photo-1475564481606-0f9f5d97c047?ixlib=rb-0.3.5&s=fd9cfb9d759bbc42162ae8952b967903&dpr=1&auto=format&fit=crop&w=1000&q=80&cs=tinysrgb",
-//         description: "This is a huge granite hill, no bathrooms. No water. Beautiful granite!"
-        
-//     }, function(err, campground){
-//         if (err){
-//             console.log(err);
-//         } else {
-//             console.log("Newly created campground.");
-//             console.log(campground);
-//         }
-//     }
-// );
+seedDB();
 
 app.get("/", function(req, res){
     res.render("landing");
@@ -74,10 +52,11 @@ app.get("/campgrounds/new", function(req, res){
 //SHOW - shows more info about one campground
 app.get("/campgrounds/:id", function(req, res){
     //find the campground with provided ID
-    Campground.findById(req.params.id, function(err, foundCampground){
+    Campground.findById(req.params.id).populate("comments").exec(function(err, foundCampground){
         if (err){
             console.log(err);
         } else {
+            console.log(foundCampground);
             //render show template with that campground
             res.render("show", {campground: foundCampground});
         }
@@ -91,10 +70,13 @@ app.listen(process.env.PORT, process.env.IP, function(){
 /*
 RESTFUL ROUTES
 
-name     url       verb      desc.
+name      url            verb        desc.
 =======================================================
-INDEX   /dogs      GET   Display a list of all dog
-NEW     /dogs/new  GET   Displays form to make a new dog
-CREATE  /dogs      POST  Add new dog to DB
-SHOW    /dogs/:id  GET   Shows info about one dog
+INDEX    /dogs           GET     List all dogs
+NEW      /dogs/new       GET     Show new dog form
+CREATE   /dogs           POST    Create a new dog, then redirect somewhere
+SHOW     /dogs/:id       GET     Show info about one specific dog
+EDIT     /dogs/:id/edit  GET     Show edit form for one dog
+UPDATE   /dogs/:id       PUT     Update a particular dog, then redirect somewhere
+DESTROY  /dogs/:id       DELETE  Delete a particular dog, then redirect somewhere  
 */
